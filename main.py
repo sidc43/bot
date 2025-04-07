@@ -1,22 +1,18 @@
-from javascript import require, On, Once, AsyncTask, once, off
+from javascript import require, On, AsyncTask, off
 from simple_chalk import chalk
 
-def vec3_to_str(v):
-    return f"x: {v['x']:.3f}, y: {v['y']:.3f}, z: {v['z']:.3f}"
-
-# Import the javascript libraries
 mineflayer = require("mineflayer")
 mineflayer_pathfinder = require("mineflayer-pathfinder")
 vec3 = require("vec3")
 
-# Global bot parameters
+def vec3_to_str(v):
+    return f"x: {v['x']:.3f}, y: {v['y']:.3f}, z: {v['z']:.3f}"
+
 server_host = "localhost"
 server_port = 60060
 reconnect = True
 
-
 class MCBot:
-
     def __init__(self, bot_name):
         self.bot_args = {
             "host": server_host,
@@ -28,11 +24,9 @@ class MCBot:
         self.bot_name = bot_name
         self.start_bot()
 
-    # Tags bot username before console messages
     def log(self, message):
         print(f"[{self.bot.username}] {message}")
 
-    # Mineflayer: Pathfind to goal
     def pathfind_to_goal(self, goal_location):
         try:
             self.bot.pathfinder.setGoal(
@@ -40,95 +34,139 @@ class MCBot:
                     goal_location["x"], goal_location["y"], goal_location["z"], 1
                 )
             )
-
         except Exception as e:
-            self.log(f"Error while trying to run pathfind_to_goal: {e}")
+            self.log(f"Error in pathfind_to_goal: {e}")
 
-    # Start mineflayer bot
     def start_bot(self):
         self.bot = mineflayer.createBot(self.bot_args)
         self.bot.loadPlugin(mineflayer_pathfinder.pathfinder)
-
         self.start_events()
 
-    # Attach mineflayer events to bot
     def start_events(self):
 
-        # Login event: Triggers on bot login
         @On(self.bot, "login")
         def login(this):
-
-            # Displays which server you are currently connected to
             self.bot_socket = self.bot._client.socket
-            self.log(
-                chalk.green(
-                    f"Logged in to {self.bot_socket.server if self.bot_socket.server else self.bot_socket._host }"
-                )
-            )
+            self.log(chalk.green(
+                f"Logged in to {self.bot_socket.server if self.bot_socket.server else self.bot_socket._host}"
+            ))
 
-        # Spawn event: Triggers on bot entity spawn
         @On(self.bot, "spawn")
         def spawn(this):
-            self.bot.chat("Hi!")
+            self.bot.chat("Hello world!")
+            self.log("Spawned and ready.")
 
-        # Kicked event: Triggers on kick from server
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
-            if loggedIn:
-                self.log(chalk.redBright(f"Kicked whilst trying to connect: {reason}"))
+            self.log(chalk.red(f"Kicked: {reason}"))
 
-        # Chat event: Triggers on chat message
-        @On(self.bot, "messagestr")
-        def messagestr(this, message, messagePosition, jsonMsg, sender, verified=None):
-            if messagePosition == "chat":
-                if "quit" in message:
-                    self.bot.chat("Goodbye!")
-                    self.reconnect = False
-                    this.quit()
-                elif "come to me" in message:
+        @On(self.bot, "chat")
+        def on_chat(this, username, message, messagePosition, jsonMsg):
+            if username == self.bot.username:
+                return
 
-                    # Find all nearby players
-                    local_players = self.bot.players
+            msg = message.lower().strip()
+            self.log(f"Received chat from {username}: {msg}")
 
-                    # Search for our specific player
-                    for el in local_players:
-                        player_data = local_players[el]
-                        if player_data["uuid"] == sender:
-                            vec3_temp = local_players[el].entity.position
-                            player_location = vec3(
-                                vec3_temp["x"], vec3_temp["y"] + 1, vec3_temp["z"]
-                            )
+            if msg == "inventory":
+                self.log("Listing inventory contents...")
+                slots = self.bot.inventory.slots
+                item_list = [item for item in slots if item]
+                if item_list:
+                    self.bot.chat("Inventory:")
+                    for item in item_list:
+                        self.bot.chat(f"{item.name} x {item.count}")
+                else:
+                    self.bot.chat("Inventory is empty.")
 
-                    # Feedback
-                    if player_location:
-                        self.log(
-                            chalk.magenta(
-                                f"Pathfinding to player at {vec3_to_str(player_location)}"
-                            )
-                        )
-                        self.pathfind_to_goal(player_location)
-                    else:
-                        self.log(f"Player not found.")
+            elif msg == "debug inventory raw":
+                for i, item in enumerate(self.bot.inventory.slots):
+                    if item:
+                        self.log(f"Slot {i}: {item.name} x {item.count}")
 
-        # End event: Triggers on disconnect from server
+            elif msg.startswith("build "):
+                parts = msg.split()
+                if len(parts) != 3:
+                    self.bot.chat("Usage: build <NxM> <block>")
+                    return
+
+                try:
+                    dims = parts[1].split("x")
+                    width, height = int(dims[0]), int(dims[1])
+                    block_name = parts[2].lower()
+                except:
+                    self.bot.chat("Invalid format. Try: build 3x3 dirt")
+                    return
+
+                block_total = width * height
+                items = [item for item in self.bot.inventory.slots if item and item.name == block_name]
+
+                if not items or sum(item.count for item in items) < block_total:
+                    self.bot.chat(f"Not enough {block_name}. Need {block_total}.")
+                    return
+
+                block_item = items[0]
+                pos = self.bot.entity.position.offset(1, -1, 1)
+                self.bot.chat(f"Building {width}x{height} of {block_name}...")
+
+                async def build_platform():
+                    placed = 0
+                    try:
+                        await self.bot.equip(block_item, "hand")
+                        for dx in range(width):
+                            for dz in range(height):
+                                place_pos = vec3(pos.x + dx, pos.y, pos.z + dz)
+                                below = self.bot.blockAt(place_pos.offset(0, -1, 0))
+
+                                if below and self.bot.canPlaceBlock(below):
+                                    try:
+                                        await self.bot.placeBlock(below, vec3(0, 1, 0))
+                                        placed += 1
+                                    except Exception as e:
+                                        self.log(f"Place failed at {vec3_to_str(place_pos)}: {e}")
+                                else:
+                                    self.log(f"Invalid reference block below {vec3_to_str(place_pos)}")
+                    except Exception as e:
+                        self.log(f"Error during building: {e}")
+
+                    self.bot.chat(f"Finished building. Placed {placed}/{block_total} blocks.")
+
+                # Use AsyncTask with no args and closure capture
+                AsyncTask(build_platform)()
+
+            elif msg == "come to me":
+                local_players = self.bot.players
+                player_location = None
+                for el in local_players:
+                    player_data = local_players[el]
+                    if player_data and player_data.uuid:
+                        if player_data.username.lower() == username.lower():
+                            vec = player_data.entity.position
+                            player_location = vec3(vec.x, vec.y + 1, vec.z)
+                            break
+
+                if player_location:
+                    self.bot.chat("Coming to you!")
+                    self.pathfind_to_goal(player_location)
+                else:
+                    self.bot.chat("Could not find you.")
+
+            elif msg == "quit":
+                self.bot.chat("Bye!")
+                self.reconnect = False
+                this.quit()
+
         @On(self.bot, "end")
         def end(this, reason):
             self.log(chalk.red(f"Disconnected: {reason}"))
-
-            # Turn off old events
+            if self.reconnect:
+                self.log("Reconnecting...")
+                self.start_bot()
             off(self.bot, "login", login)
             off(self.bot, "spawn", spawn)
             off(self.bot, "kicked", kicked)
-            off(self.bot, "messagestr", messagestr)
-
-            # Reconnect
-            if self.reconnect:
-                self.log(chalk.cyanBright(f"Attempting to reconnect"))
-                self.start_bot()
-
-            # Last event listener
+            off(self.bot, "chat", on_chat)
             off(self.bot, "end", end)
 
-
-# Run function that starts the bot(s)
-bot = MCBot("pathfinder-bot")
+# Start the bot
+bot = MCBot("Spark")
