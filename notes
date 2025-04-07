@@ -1,0 +1,15 @@
+Bugs: 
+- Jumping and placing block timing
+- Add Jump and while sprinting
+
+To do:
+- Go to a certain player
+- [Sid] Add inventory management "Get dirt" -> Gets dirt and holds it. Equip commands, list inventory command 
+- [Joe] Add basic PvP
+- Add eating/swimming 
+- [Sid] Add foraging 
+- [Sid] Add chest databases
+- [Joe] Add basic building using dimensions and block suggestions ex "build a 4x4 dirt house"
+
+[Current Features]:
+- Basic pathfinding (block breaking/placing)
