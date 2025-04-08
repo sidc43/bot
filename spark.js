@@ -1,24 +1,24 @@
 const mineflayer = require('mineflayer');
+const { pathfinder } = require('mineflayer-pathfinder');
+
+const { registerMovement } = require('./movement'); // import "cog"
 
 const bot = mineflayer.createBot({
-  host: 'localhost', // Minecraft server IP
-  port: 25565, // Minecraft server port
-  username: 'Bot', // Bot username
+  host: 'localhost',
+  port: 60060,
+  username: 'Bot',
 });
+
+bot.loadPlugin(pathfinder);
 
 bot.on('login', () => {
   console.log('Bot has logged in');
-}
-);
+});
+
 bot.on('spawn', () => {
   console.log('Bot has spawned');
   bot.chat('Hello, I am a bot!');
-});
-      
-bot.on('chat', (username, message) => {
-  if (username === bot.username) return; // Ignore messages from the bot itself
-  console.log(`${username}: ${message}`);
-  if (message === 'hello') {
-    bot.chat(`Hello, ${username}!`);
-  }
+  
+  // Register "cogs" here
+  registerMovement(bot);
 });
