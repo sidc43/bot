@@ -5,7 +5,12 @@ Bugs:
 To do:
 - Go to a certain player
 - [Sid] Add inventory management "Get dirt" -> Gets dirt and holds it. Equip commands, list inventory command 
-- [Joe] Add basic PvP
+- [Joe] Add basic PvP \\ DONE
+    > Added "Guard Me": Bot follows you and attacks hostile mobs around you
+    > Added "Attack Me": Bot engages in combat 
+- [JOE] Movement: \\ DONE
+    > Added "Follow Me": Bot follows you around
+    > Added "Come to me": Bot comes to your location at time of message and sends out an ETA
 - Add eating/swimming 
 - [Sid] Add foraging 
 - [Sid] Add chest databases

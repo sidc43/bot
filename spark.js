@@ -1,7 +1,12 @@
 const mineflayer = require('mineflayer');
 const { pathfinder } = require('mineflayer-pathfinder');
 
-const { registerMovement } = require('./movement'); // import "cog"
+const { registerPvp } = require('./pvp'); // PVP - JOE
+const { registerMovement } = require('./movement'); // MOVEMENT - JOE
+const { registerEventLog } = require('./eventlog'); // MEMORY - JOE
+const { registerIdle } = require('./idle'); // AUTOPILOT - JOE
+
+
 
 const bot = mineflayer.createBot({
   host: 'localhost',
@@ -20,5 +25,8 @@ bot.on('spawn', () => {
   bot.chat('Hello, I am a bot!');
   
   // Register "cogs" here
+  registerEventLog(bot);
   registerMovement(bot);
+  registerPvp(bot);
+  registerIdle(bot);
 });
