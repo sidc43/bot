@@ -4,7 +4,7 @@ const { pathfinder } = require('mineflayer-pathfinder');
 const { registerPvp } = require('./pvp'); // PVP - JOE
 const { registerMovement } = require('./movement'); // MOVEMENT - JOE
 const { registerEventLog } = require('./eventlog'); // MEMORY - JOE
-const { registerIdle } = require('./idle'); // AUTOPILOT - JOE
+//const { registerIdle } = require('./idle'); // AUTOPILOT - JOE
 
 
 
@@ -28,5 +28,5 @@ bot.on('spawn', () => {
   registerEventLog(bot);
   registerMovement(bot);
   registerPvp(bot);
-  registerIdle(bot);
+  //registerIdle(bot);
 });
