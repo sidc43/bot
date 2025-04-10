@@ -73,10 +73,10 @@ bot.once("spawn", () => {
           return;
         }
       
-        console.log("[DEBUG] Using planCraft to make", plank.name);
         const plan = bot.planCraft({ id: plank.id, count: 4 });
+
       
-        console.log("[DEBUG] Crafting plan:", JSON.stringify(plan, null, 2));
+        //console.log("[DEBUG] Crafting plan:", JSON.stringify(plan, null, 2));
       
         if (!plan.success || plan.recipesToDo.length === 0) {
           console.log("[DEBUG] No valid plan to craft", plank.name);
@@ -87,32 +87,38 @@ bot.once("spawn", () => {
           if (i >= plan.recipesToDo.length) {
             bot.chat(`Crafted ${plank.name} from ${logItem.name}`);
             logMemory(`Crafted ${plank.name} from ${logItem.name}`);
-            return;
+            //return;
           }
       
           const { recipe, recipeApplications } = plan.recipesToDo[i];
           const requiredName = bot.registry.items[recipe.ingredients?.[0]?.id]?.name;
           const itemToEquip = bot.inventory.items().find(i => i.name === requiredName);
-      
+          
+          console.log(itemToEquip);
+
           if (!itemToEquip) {
             console.log("[DEBUG] Missing ingredient:", requiredName);
             return;
           }
-      
-          bot.equip(itemToEquip, "hand", err => {
+
+          bot.craft(recipe, recipeApplications, null, err => {
             if (err) {
-              console.log("[EQUIP ERROR]", err);
-              return;
+              console.log("[CRAFT ERROR]", err);
+            } else {
+              console.log("[CRAFT SUCCESS]");
+              craftNext(i + 1);
             }
-      
-            bot.craft(recipe, recipeApplications, null, err => {
-              if (err) {
-                console.log("[CRAFT ERROR]", err);
-              } else {
-                craftNext(i + 1);
-              }
-            });
           });
+      
+          // bot.equip(itemToEquip.type, "hand", err => {
+          //   console.log("[EQUIP SUCCESS]");
+          //   if (err) {
+          //     console.log("[EQUIP ERROR]", err);
+          //     return;
+          //   }
+      
+            
+          // });
         };
       
         craftNext();
@@ -174,7 +180,7 @@ bot.once("spawn", () => {
         if (log) logMemory(log);
       }, 6000);
     }
-  }, 15000);
+  }, 1000);
 
   bot.on("chat", (username, message) => {
     if (username === bot.username) return;

@@ -6,7 +6,7 @@ function help(commands, bot) {
 
     if (message === "help") {
       for (const c of commands) {
-        bot.chat(c?.command + " : " + c?.desc);
+        bot.chat(c?.command + ": " + c?.desc);
       }
     }
   });
