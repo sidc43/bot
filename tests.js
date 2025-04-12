@@ -87,7 +87,7 @@ bot.once("spawn", () => {
           if (i >= plan.recipesToDo.length) {
             bot.chat(`Crafted ${plank.name} from ${logItem.name}`);
             logMemory(`Crafted ${plank.name} from ${logItem.name}`);
-            //return;
+            return;
           }
       
           const { recipe, recipeApplications } = plan.recipesToDo[i];
