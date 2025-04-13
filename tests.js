@@ -93,8 +93,8 @@ bot.once("spawn", () => {
           const { recipe, recipeApplications } = plan.recipesToDo[i];
           const requiredName = bot.registry.items[recipe.ingredients?.[0]?.id]?.name;
           const itemToEquip = bot.inventory.items().find(i => i.name === requiredName);
-          
-          console.log(itemToEquip);
+
+
 
           if (!itemToEquip) {
             console.log("[DEBUG] Missing ingredient:", requiredName);
@@ -132,7 +132,31 @@ bot.once("spawn", () => {
     if (has("planks", 4) && !has("crafting_table")) {
       const table = bot.registry.itemsByName.crafting_table;
       const recipe = bot.recipesFor(table.id, null, 1)[0];
-      if (recipe) bot.craft(recipe, 1, null, () => logMemory("Crafted a crafting table."));
+      console.log("Crafting a crafting table:");
+      bot.craft(recipe, 1, undefined, err => {
+        console.log("Entering crafting area")
+        if (err) return console.log("Craft error:", err);
+        logMemory("Crafted a crafting table.");
+        console.log("Crafted a crafting table.");
+        const tableItem = bot.inventory.items().find(i => i.name === "crafting_table");
+        if (!tableItem) return console.log("No table in inventory.");
+        console.log("Equipping crafting table:");
+        bot.equip(tableItem, "hand", err => {
+          if (err) return console.log("Equip error:", err);
+      
+          const surface = bot.findBlock({ matching: b => b.boundingBox === 'block', maxDistance: 4 });
+          if (!surface) return console.log("No surface to place on.");
+      
+          bot.placeBlock(surface, new Vec3(0, 1, 0), err => {
+            if (err) console.log("Place error:", err);
+            else {
+              bot.chat("Placed a crafting table.");
+              logMemory("Placed a crafting table.");
+            }
+          });
+        });
+      });
+      
       return;
     }
 
