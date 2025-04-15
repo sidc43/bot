@@ -10,7 +10,7 @@ const { help } = require('./help');
 const bot = mineflayer.createBot({
   host: 'localhost',
   port: 60060,
-  username: 'Bot',
+  username: 'Solarzide',
 });
 
 const commands = [
